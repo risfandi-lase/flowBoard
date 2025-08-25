@@ -1,22 +1,28 @@
-import React from "react";
-import sarahImg from "/src/assets/sarah.jpg";
-import alexImg from "/src/assets/alex.jpeg";
-import mikeImg from "/src/assets/mike.jpg";
-import rachelImg from "/src/assets/rachel.jpg";
+// src/pages/WebsiteRedesign.tsx
+import React, { useState } from "react";
 import { Icon } from "@iconify/react/dist/iconify.js";
+import { useApi } from "../contexts/ApiContext";
+import type { Task, User } from "../types/api";
 
 export default function WebsiteRedesign() {
-  interface User {
-    name: string;
-    avatar: string;
-  }
-
-  const users: User[] = [
-    { name: "Sarah Miller", avatar: sarahImg },
-    { name: "Alex Johnson", avatar: alexImg },
-    { name: "Mike Kim", avatar: mikeImg },
-    { name: "Rachel Foster", avatar: rachelImg },
-  ];
+  const { currentProject, tasks, createTask, moveTask, addMemberToProject, users } = useApi();
+  const [showNewTaskForms, setShowNewTaskForms] = useState<{
+    todo: boolean;
+    'in-progress': boolean;
+    completed: boolean;
+  }>({
+    todo: false,
+    'in-progress': false,
+    completed: false
+  });
+  const [newTaskData, setNewTaskData] = useState({
+    title: "",
+    description: "",
+    category: "DESIGN",
+    categoryColor: "badge-info",
+    borderColor: "border-amber-300",
+    status: "todo" as const
+  });
 
   const getInitials = (name: string): string => {
     return name
@@ -27,43 +33,219 @@ export default function WebsiteRedesign() {
       .slice(0, 2);
   };
 
+  const categoryOptions = [
+    { name: "DESIGN", color: "badge-info", border: "border-amber-300" },
+    { name: "DEVELOPMENT", color: "badge-warning", border: "border-red-300" },
+    { name: "RESEARCH", color: "badge-error", border: "border-blue-300" },
+    { name: "BUG", color: "badge-success", border: "border-blue-300" },
+    { name: "MEETING", color: "badge-neutral", border: "border-amber-300" }
+  ];
+
+  const handleCreateTask = async (status: 'todo' | 'in-progress' | 'completed') => {
+    if (!currentProject || !newTaskData.title.trim()) return;
+
+    await createTask({
+      ...newTaskData,
+      projectId: currentProject.id,
+      status
+    });
+
+    setNewTaskData({
+      title: "",
+      description: "",
+      category: "DESIGN",
+      categoryColor: "badge-info",
+      borderColor: "border-amber-300",
+      status: "todo"
+    });
+    setShowNewTaskForms({ ...showNewTaskForms, [status]: false });
+  };
+
+  const handleDragStart = (e: React.DragEvent, taskId: number) => {
+    e.dataTransfer.setData("text/plain", taskId.toString());
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = async (e: React.DragEvent, newStatus: 'todo' | 'in-progress' | 'completed') => {
+    e.preventDefault();
+    const taskId = parseInt(e.dataTransfer.getData("text/plain"));
+    await moveTask(taskId, newStatus);
+  };
+
+  const renderTaskCard = (task: Task) => (
+    <figure key={task.id} className="p-3">
+      <div 
+        className="card bg-base-100 w-96 shadow-lg border-dashed border-1 border-gray-400 hover:shadow-lg hover:scale-102 cursor-grab transition-transform duration-500"
+        draggable
+        onDragStart={(e) => handleDragStart(e, task.id)}
+      >
+        <div className={`card-body p-3 border-l-8 rounded-2xl ${task.borderColor}`}>
+          <h2 className="card-title text-sm font-semibold">{task.title}</h2>
+          <p className="text-md text-gray-400">{task.description}</p>
+          <div className={`badge ${task.categoryColor} text-white`}>
+            {task.category}
+          </div>
+          <div className="flex items-center">
+            {task.assigneeDetails?.slice(0, 4).map((user: User, index: number) => (
+              <div
+                key={user.id}
+                className={`w-10 h-10 rounded-xl border-2 border-white shadow-sm ${index > 0 ? "-ml-3" : ""}`}
+              >
+                <img
+                  src={user.avatar}
+                  alt={user.name}
+                  className="w-10 h-10 rounded-xl object-cover"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = "none";
+                    target.nextElementSibling?.classList.remove("hidden");
+                  }}
+                />
+                <div className="hidden w-full h-full rounded-xl bg-gray-500 flex items-center justify-center text-white font-bold text-sm">
+                  {getInitials(user.name)}
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="card-actions justify-end">
+            {new Date(task.createdAt).toLocaleDateString()}
+          </div>
+        </div>
+      </div>
+    </figure>
+  );
+
+  const renderNewTaskForm = (status: 'todo' | 'in-progress' | 'completed') => (
+    <div className="p-3">
+      <div className="card bg-base-100 w-96 shadow-lg border-2 border-dashed border-primary">
+        <div className="card-body p-3">
+          <input
+            type="text"
+            placeholder="Task title"
+            className="input input-bordered input-sm w-full mb-2"
+            value={newTaskData.title}
+            onChange={(e) => setNewTaskData(prev => ({ ...prev, title: e.target.value }))}
+          />
+          <textarea
+            placeholder="Task description"
+            className="textarea textarea-bordered textarea-sm w-full mb-2"
+            rows={2}
+            value={newTaskData.description}
+            onChange={(e) => setNewTaskData(prev => ({ ...prev, description: e.target.value }))}
+          />
+          <select
+            className="select select-bordered select-sm w-full mb-2"
+            value={newTaskData.category}
+            onChange={(e) => {
+              const selected = categoryOptions.find(cat => cat.name === e.target.value);
+              setNewTaskData(prev => ({
+                ...prev,
+                category: e.target.value,
+                categoryColor: selected?.color || "badge-info",
+                borderColor: selected?.border || "border-amber-300"
+              }));
+            }}
+          >
+            {categoryOptions.map(cat => (
+              <option key={cat.name} value={cat.name}>{cat.name}</option>
+            ))}
+          </select>
+          <div className="flex gap-2">
+            <button 
+              className="btn btn-primary btn-sm flex-1"
+              onClick={() => handleCreateTask(status)}
+            >
+              Create Task
+            </button>
+            <button 
+              className="btn btn-ghost btn-sm flex-1"
+              onClick={() => setShowNewTaskForms({ ...showNewTaskForms, [status]: false })}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderColumn = (
+    title: string, 
+    status: 'todo' | 'in-progress' | 'completed', 
+    icon: string, 
+    bgColor: string,
+    tasksArray: Task[]
+  ) => (
+    <div 
+      className="card bg-base-100 rounded-2xl items-center h-full w-106 shadow-sm"
+      onDragOver={handleDragOver}
+      onDrop={(e) => handleDrop(e, status)}
+    >
+      <div className={`${bgColor} rounded-t-2xl relative h-20 w-full flex items-center justify-between px-6`}>
+        <div className="flex items-center">
+          <Icon icon={icon} width="30" style={{ color: "#fff" }} />
+          <h2 className="text-xl font-bold ml-2">{title}</h2>
+        </div>
+        <p className="text-xl font-bold absolute top-6 right-6">{tasksArray.length}</p>
+      </div>
+
+      {tasksArray.map(renderTaskCard)}
+      {showNewTaskForms[status] && renderNewTaskForm(status)}
+      
+      <button 
+        className="btn btn-dash rounded-xl w-96 mt-4 mb-8 text-gray-400"
+        onClick={() => setShowNewTaskForms({ ...showNewTaskForms, [status]: true })}
+      >
+        <Icon icon="ic:baseline-plus" width="20" style={{ color: " #aaa" }} />
+        Add New Task
+      </button>
+    </div>
+  );
+
+  if (!currentProject) {
+    return (
+      <div className="bg-base-300 rounded-4xl p-4 shadow-sm">
+        <div className="flex items-center justify-center h-96">
+          <div className="text-center">
+            <Icon icon="mdi:folder-outline" width="64" className="text-gray-400 mx-auto mb-4" />
+            <p className="text-xl text-gray-400">No project selected</p>
+            <p className="text-gray-500 mt-2">Select a project from the sidebar to get started</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-base-300 rounded-4xl p-4 shadow-sm">
       {/* HEAD PROJECT TITLE */}
       <div className="p-6">
-        <h1 className="text-2xl font-bold">Website Redesign</h1>
-        <p className="text-lg mt-2">
-          Complete redesign of the company website to improve user experience,
-          increase conversions, and modernize our digital presence. Lorem ipsum
-          dolor sit amet consectetur adipisicing elit. Distinctio molestiae
-          natus id autem similique corrupti nihil debitis dicta culpa,
-          perspiciatis dolore assumenda veritatis labore quo suscipit saepe enim
-          neque accusamus.
-        </p>
+        <h1 className="text-2xl font-bold">{currentProject.title}</h1>
+        <p className="text-lg mt-2">{currentProject.description}</p>
+        
         {/* Avatar */}
         <div>
           <div className="flex items-center justify-between mt-6">
             <div className="flex items-center">
-              {users.map((user, index) => (
+              {currentProject.members?.map((user: User, index: number) => (
                 <div
-                  key={index}
-                  className={`
-            w-12 h-12 rounded-2xl border-2 border-white shadow-sm
-            ${index > 0 ? "-ml-3" : ""}
-          `}
+                  key={user.id}
+                  className={`w-12 h-12 rounded-2xl border-2 border-white shadow-sm ${index > 0 ? "-ml-3" : ""}`}
                 >
                   <img
                     src={user.avatar}
                     alt={user.name}
                     className="w-12 h-12 rounded-2xl object-cover"
                     onError={(e) => {
-                      // Fallback to initials if image fails to load
                       const target = e.target as HTMLImageElement;
                       target.style.display = "none";
                       target.nextElementSibling?.classList.remove("hidden");
                     }}
                   />
-                  <div className="hidden w-full h-full rounded-full bg-gray-500 flex items-center justify-center text-white font-bold text-sm">
+                  <div className="hidden w-full h-full rounded-2xl bg-gray-500 flex items-center justify-center text-white font-bold text-sm">
                     {getInitials(user.name)}
                   </div>
                 </div>
@@ -71,341 +253,18 @@ export default function WebsiteRedesign() {
             </div>
 
             <button className="btn btn-secondary">
-              <Icon
-                icon="ic:baseline-plus"
-                width="20"
-                style={{ color: " #fff" }}
-              />
+              <Icon icon="ic:baseline-plus" width="20" style={{ color: " #fff" }} />
               Add Member
             </button>
           </div>
         </div>
       </div>
-      {/*///////////////////////////////////// CARD  */}
+
+      {/*///////////////////////////////////// CARDS  */}
       <div className="flex mt-10 px-6 justify-between">
-        {/* TODO CARD */}
-        <div className="card bg-base-100 rounded-2xl items-center  h-full w-106 shadow-sm">
-          <div className="bg-primary rounded-t-2xl relative h-20 w-full flex items-center justify-between px-6">
-            <div className="flex items-center">
-              <Icon icon="ri:todo-line" width="30" style={{ color: "#fff" }} />
-              <h2 className="text-xl font-bold ml-2">TO DO!</h2>
-            </div>
-            <p className="text-xl font-bold absolute top-6 right-6">4</p>
-          </div>
-
-          <figure className="p-3">
-            <div className="card bg-base-100 w-96 shadow-lg border-dashed border-1 border-gray-400 hover:shadow-lg hover:scale-102 cursor-grab transition-transform duration-500 ">
-              <div className="card-body p-3 border-l-8 rounded-2xl border-amber-300">
-                <h2 className="card-title text-sm font-semibold ">
-                  Create wireframes for homepage
-                </h2>
-                <p className="text-md text-gray-400">
-                  Design the basic layout and structure for the new homepage
-                  including header, hero section, features, and footer{" "}
-                </p>
-                <div className="badge badge-info text-white">DESIGN</div>
-                <div className="flex items-center">
-                  {users.slice(1, 3).map((user, index) => (
-                    <div
-                      key={index}
-                      className={`
-            w-10 h-10 rounded-xl border-2 border-white shadow-sm
-            ${index > 0 ? "-ml-3" : ""}
-          `}
-                    >
-                      <img
-                        src={user.avatar}
-                        alt={user.name}
-                        className="w-10 h-10 rounded-xl object-cover"
-                        onError={(e) => {
-                          // Fallback to initials if image fails to load
-                          const target = e.target as HTMLImageElement;
-                          target.style.display = "none";
-                          target.nextElementSibling?.classList.remove("hidden");
-                        }}
-                      />
-                      <div className="hidden w-full h-full rounded-full bg-gray-500 flex items-center justify-center text-white font-bold text-sm">
-                        {getInitials(user.name)}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <div className="card-actions justify-end">time_created</div>
-              </div>
-            </div>
-          </figure>
-
-          <figure className="p-3">
-            <div className="card bg-base-100 w-96 shadow-lg border-dashed border-1 border-gray-400 hover:shadow-lg hover:scale-102 cursor-grab transition-transform duration-500 ">
-              <div className="card-body p-3 border-l-8 rounded-2xl border-red-300">
-                <h2 className="card-title text-sm font-semibold ">
-                  Set up development environment
-                </h2>
-                <p className="text-md text-gray-400">
-                  Configure React, TypeScript, Tailwind CSS, and testing
-                  framework for the new website build
-                </p>
-                <div className="badge badge-warning text-white">
-                  DEVELOPMENT
-                </div>
-                <div className="flex items-center">
-                  {users.slice(0, 5).map((user, index) => (
-                    <div
-                      key={index}
-                      className={`
-            w-10 h-10 rounded-xl border-2 border-white shadow-sm
-            ${index > 0 ? "-ml-3" : ""}
-          `}
-                    >
-                      <img
-                        src={user.avatar}
-                        alt={user.name}
-                        className="w-10 h-10 rounded-xl object-cover"
-                        onError={(e) => {
-                          // Fallback to initials if image fails to load
-                          const target = e.target as HTMLImageElement;
-                          target.style.display = "none";
-                          target.nextElementSibling?.classList.remove("hidden");
-                        }}
-                      />
-                      <div className="hidden w-full h-full rounded-full bg-gray-500 flex items-center justify-center text-white font-bold text-sm">
-                        {getInitials(user.name)}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <div className="card-actions justify-end">time_created</div>
-              </div>
-            </div>
-          </figure>
-
-          <figure className="p-3">
-            <div className="card bg-base-100 w-96 shadow-lg border-dashed border-1 border-gray-400 hover:shadow-lg hover:scale-102 cursor-grab transition-transform duration-500 ">
-              <div className="card-body p-3 border-l-8 rounded-2xl border-blue-300">
-                <h2 className="card-title text-sm font-semibold ">
-                  User research and interviews{" "}
-                </h2>
-                <p className="text-md text-gray-400">
-                  Conduct comprehensive interviews with 15 users to understand
-                  current pain points and gather feedback on proposed changes{" "}
-                </p>
-                <div className="badge badge-error text-white">RESEARCH</div>
-                <div className="flex items-center">
-                  {users.slice(2, 5).map((user, index) => (
-                    <div
-                      key={index}
-                      className={`
-            w-10 h-10 rounded-xl border-2 border-white shadow-sm
-            ${index > 0 ? "-ml-3" : ""}
-          `}
-                    >
-                      <img
-                        src={user.avatar}
-                        alt={user.name}
-                        className="w-10 h-10 rounded-xl object-cover"
-                        onError={(e) => {
-                          // Fallback to initials if image fails to load
-                          const target = e.target as HTMLImageElement;
-                          target.style.display = "none";
-                          target.nextElementSibling?.classList.remove("hidden");
-                        }}
-                      />
-                      <div className="hidden w-full h-full rounded-full bg-gray-500 flex items-center justify-center text-white font-bold text-sm">
-                        {getInitials(user.name)}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <div className="card-actions justify-end">time_created</div>
-              </div>
-            </div>
-          </figure>
-             <button className="btn btn-dash rounded-xl w-96 mt-15 mb-8 text-gray-400">
-            {" "}
-            <Icon
-              icon="ic:baseline-plus"
-              width="20"
-              style={{ color: " #aaa" }}
-            />
-            Add New Task
-          </button>
-        </div>
-
-        {/* IN PROGRESS CARD */}
-        <div className="card bg-base-100 rounded-2xl items-center w-106  h-full shadow-sm">
-          <div className="bg-secondary rounded-t-2xl w-full relative h-20 flex items-center justify-between px-6 ">
-            <div className="flex items-center">
-              <Icon
-                icon="tabler:progress"
-                width="30"
-                style={{ color: "#fff" }}
-              />
-              <h2 className="text-xl font-bold ml-2">IN PROGRES</h2>
-            </div>
-            <p className="text-xl font-bold absolute top-6 right-6">4</p>
-          </div>
-
-          <figure className="p-3">
-            <div className="card bg-base-100 w-96 shadow-lg border-dashed border-1 border-gray-400 hover:shadow-lg hover:scale-102 cursor-grab transition-transform duration-500 ">
-              <div className="card-body p-3 border-l-8 rounded-2xl border-blue-300">
-                <h2 className="card-title text-sm font-semibold ">
-                  Implement user authentication
-                </h2>
-                <p className="text-md text-gray-400">
-                  Set up OAuth integration and user session management. Resolve
-                  layout problems on mobile devices{" "}
-                </p>
-                <div className="badge badge-success text-white">BUG</div>
-                <div className="flex items-center">
-                  {users.slice(2, 5).map((user, index) => (
-                    <div
-                      key={index}
-                      className={`
-            w-10 h-10 rounded-xl border-2 border-white shadow-sm
-            ${index > 0 ? "-ml-3" : ""}
-          `}
-                    >
-                      <img
-                        src={user.avatar}
-                        alt={user.name}
-                        className="w-10 h-10 rounded-xl object-cover"
-                        onError={(e) => {
-                          // Fallback to initials if image fails to load
-                          const target = e.target as HTMLImageElement;
-                          target.style.display = "none";
-                          target.nextElementSibling?.classList.remove("hidden");
-                        }}
-                      />
-                      <div className="hidden w-full h-full rounded-full bg-gray-500 flex items-center justify-center text-white font-bold text-sm">
-                        {getInitials(user.name)}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <div className="card-actions justify-end">time_created</div>
-              </div>
-            </div>
-          </figure>
-          <button className="btn btn-dash rounded-xl w-96 mt-15 mb-8 text-gray-400">
-            {" "}
-            <Icon
-              icon="ic:baseline-plus"
-              width="20"
-              style={{ color: " #aaa" }}
-            />
-            Add New Task
-          </button>
-        </div>
-
-        {/* COMPLETED CARD */}
-        <div className="card bg-base-100 rounded-2xl w-106 h-full items-center  shadow-sm">
-          <div className="bg-accent rounded-t-2xl relative w-full h-20 flex items-center justify-between px-6">
-            <div className="flex items-center">
-              <Icon
-                icon="octicon:tracked-by-closed-completed-16"
-                width="30"
-                style={{ color: "#fff" }}
-              />
-              <h2 className="text-xl font-bold ml-2">COMPLETED</h2>
-            </div>
-            <p className="text-xl font-bold absolute top-6 right-6">4</p>
-          </div>
-
-          <figure className="p-3">
-            <div className="card bg-base-100 w-96 shadow-lg border-dashed border-1 border-gray-400 hover:shadow-lg hover:scale-102 cursor-grab transition-transform duration-500 ">
-              <div className="card-body p-3 border-l-8 rounded-2xl border-amber-300">
-                <h2 className="card-title text-sm font-semibold ">
-                  Create wireframes for homepage
-                </h2>
-                <p className="text-md text-gray-400">
-                  Design the basic layout and structure for the new homepage
-                  including header, hero section, features, and footer{" "}
-                </p>
-                <div className="badge badge-neutral text-white">MEETING</div>
-                <div className="flex items-center">
-                  {users.slice(0, 4).map((user, index) => (
-                    <div
-                      key={index}
-                      className={`
-            w-10 h-10 rounded-xl border-2 border-white shadow-sm
-            ${index > 0 ? "-ml-3" : ""}
-          `}
-                    >
-                      <img
-                        src={user.avatar}
-                        alt={user.name}
-                        className="w-10 h-10 rounded-xl object-cover"
-                        onError={(e) => {
-                          // Fallback to initials if image fails to load
-                          const target = e.target as HTMLImageElement;
-                          target.style.display = "none";
-                          target.nextElementSibling?.classList.remove("hidden");
-                        }}
-                      />
-                      <div className="hidden w-full h-full rounded-full bg-gray-500 flex items-center justify-center text-white font-bold text-sm">
-                        {getInitials(user.name)}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <div className="card-actions justify-end">time_created</div>
-              </div>
-            </div>
-          </figure>
-
-          <figure className="p-3">
-            <div className="card bg-base-100 w-96 shadow-lg border-dashed border-1 border-gray-400 hover:shadow-lg hover:scale-102 cursor-grab transition-transform duration-500 ">
-              <div className="card-body p-3 border-l-8 rounded-2xl  border-red-300">
-                <h2 className="card-title text-sm font-semibold ">
-                  Set up development environment
-                </h2>
-                <p className="text-md text-gray-400">
-                  Configure React, TypeScript, Tailwind CSS, and testing
-                  framework for the new website build
-                </p>
-                <div className="badge badge-warning text-white">
-                  DEVELOPMENT
-                </div>
-                <div className="flex items-center">
-                  {users.slice(4, 5).map((user, index) => (
-                    <div
-                      key={index}
-                      className={`
-            w-10 h-10 rounded-xl border-2 border-white shadow-sm
-            ${index > 0 ? "-ml-3" : ""}
-          `}
-                    >
-                      <img
-                        src={user.avatar}
-                        alt={user.name}
-                        className="w-10 h-10 rounded-xl object-cover"
-                        onError={(e) => {
-                          // Fallback to initials if image fails to load
-                          const target = e.target as HTMLImageElement;
-                          target.style.display = "none";
-                          target.nextElementSibling?.classList.remove("hidden");
-                        }}
-                      />
-                      <div className="hidden w-full h-full rounded-full bg-gray-500 flex items-center justify-center text-white font-bold text-sm">
-                        {getInitials(user.name)}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <div className="card-actions justify-end">time_created</div>
-              </div>
-            </div>
-          </figure>
-             <button className="btn btn-dash rounded-xl w-96 mt-15 mb-8 text-gray-400">
-            {" "}
-            <Icon
-              icon="ic:baseline-plus"
-              width="20"
-              style={{ color: " #aaa" }}
-            />
-            Add New Task
-          </button>
-        </div>
+        {renderColumn("TO DO!", "todo", "ri:todo-line", "bg-primary", tasks.todo)}
+        {renderColumn("IN PROGRESS", "in-progress", "tabler:progress", "bg-secondary", tasks['in-progress'])}
+        {renderColumn("COMPLETED", "completed", "octicon:tracked-by-closed-completed-16", "bg-accent", tasks.completed)}
       </div>
     </div>
   );

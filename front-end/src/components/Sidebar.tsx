@@ -1,37 +1,116 @@
+// src/components/Sidebar.tsx
 import { Icon } from "@iconify/react/dist/iconify.js";
-import React from "react";
+import React, { useState } from "react";
+import { useApi } from "../contexts/ApiContext";
+import type { Project } from "../types/api";
 
 function Sidebar() {
-  const projects = [
-    { color: "bg-warning", title: "Website Redesign", count: 5 },
-    { color: "bg-success", title: "SAAS For Hospital", count: 12 },
-    { color: "bg-error", title: "Campaign Website", count: 1 },
-    { color: "bg-info", title: "Mobile App", count: 0 },
+  const { projects, currentProject, loadProject, createProject, setCurrentProject } = useApi();
+  const [showNewProjectForm, setShowNewProjectForm] = useState(false);
+  const [newProjectData, setNewProjectData] = useState({
+    title: "",
+    description: "",
+    color: "bg-warning"
+  });
+
+  const colors = [
+    { name: "Warning", value: "bg-warning" },
+    { name: "Success", value: "bg-success" },
+    { name: "Error", value: "bg-error" },
+    { name: "Info", value: "bg-info" },
+    { name: "Primary", value: "bg-primary" },
+    { name: "Secondary", value: "bg-secondary" }
   ];
 
+  const handleProjectClick = async (project: Project) => {
+    setCurrentProject(project);
+    await loadProject(project.id);
+  };
+
+  const handleCreateProject = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newProjectData.title.trim()) {
+      await createProject(newProjectData);
+      setNewProjectData({ title: "", description: "", color: "bg-warning" });
+      setShowNewProjectForm(false);
+    }
+  };
+
   return (
-    <div className="bg-base-300 py-2 w-72 h-full rounded-4xl  shadow-sm flex flex-col">
+    <div className="bg-base-300 py-2 w-72 h-full rounded-4xl shadow-sm flex flex-col">
       <div className="flex-1 px-4">
-        <button className="btn btn-primary mt-6 w-full">
+        <button 
+          className="btn btn-primary mt-6 w-full"
+          onClick={() => setShowNewProjectForm(!showNewProjectForm)}
+        >
           <Icon icon="ic:baseline-plus" width="20" style={{ color: " #fff" }} />
           New Project
         </button>
+
+        {/* New Project Form */}
+        {showNewProjectForm && (
+          <form onSubmit={handleCreateProject} className="mt-4 space-y-3">
+            <input
+              type="text"
+              placeholder="Project title"
+              className="input input-bordered w-full input-sm"
+              value={newProjectData.title}
+              onChange={(e) => setNewProjectData(prev => ({ ...prev, title: e.target.value }))}
+              required
+            />
+            <textarea
+              placeholder="Project description"
+              className="textarea textarea-bordered w-full textarea-sm"
+              value={newProjectData.description}
+              onChange={(e) => setNewProjectData(prev => ({ ...prev, description: e.target.value }))}
+              rows={2}
+            />
+            <select
+              className="select select-bordered w-full select-sm"
+              value={newProjectData.color}
+              onChange={(e) => setNewProjectData(prev => ({ ...prev, color: e.target.value }))}
+            >
+              {colors.map(color => (
+                <option key={color.value} value={color.value}>
+                  {color.name}
+                </option>
+              ))}
+            </select>
+            <div className="flex gap-2">
+              <button type="submit" className="btn btn-primary btn-sm flex-1">
+                Create
+              </button>
+              <button 
+                type="button" 
+                className="btn btn-ghost btn-sm flex-1"
+                onClick={() => setShowNewProjectForm(false)}
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        )}
+
         <p className="mt-10">PROJECTS</p>
 
         <div className="mt-2 flex flex-col gap-5">
-          {projects.map((project, index) => (
+          {projects.map((project) => (
             <div
-              key={index}
-              className="flex items-center gap-2 hover:bg-primary hover:rounded-xl p-2 rounded cursor-pointer"
+              key={project.id}
+              className={`flex items-center gap-2 hover:bg-primary hover:rounded-xl p-2 rounded cursor-pointer transition-colors ${
+                currentProject?.id === project.id ? 'bg-primary text-white' : ''
+              }`}
+              onClick={() => handleProjectClick(project)}
             >
               <div className={`w-2 h-2 ${project.color} rounded-full`}></div>
-              <p>{project.title}</p>
-              <span className="ml-auto">{project.count}</span>
+              <p className="flex-1 truncate">{project.title}</p>
+              <span className="ml-auto">{project.taskCount}</span>
             </div>
           ))}
         </div>
       </div>
-      <p className="flex items-center mb-4 px-4">
+      
+      <p className="flex items-center mb-4 px-4 cursor-pointer hover:text-primary transition-colors">
         <Icon
           icon="material-symbols-light:settings-outline-rounded"
           width="26"
