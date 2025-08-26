@@ -53,9 +53,23 @@ export const ApiProvider: React.FC<ApiProviderProps> = ({ children }) => {
 
   // Load initial data
   useEffect(() => {
-    loadProjects();
-    loadUsers();
+    const initializeData = async () => {
+      // Load users first
+      await loadUsers();
+      // Then load projects
+      await loadProjects();
+    };
+    
+    initializeData();
   }, []);
+
+  // Load projects and set initial project
+  useEffect(() => {
+    if (projects.length > 0 && !currentProject && users.length > 0) {
+      setCurrentProject(projects[0]);
+      loadTasks(projects[0].id);
+    }
+  }, [projects, users]);
 
   // Load projects
   const loadProjects = async () => {
@@ -65,11 +79,6 @@ export const ApiProvider: React.FC<ApiProviderProps> = ({ children }) => {
       const response = await mockApi.getProjects();
       if (response.success) {
         setProjects(response.data);
-        // Set first project as current if none selected
-        if (!currentProject && response.data.length > 0) {
-          setCurrentProject(response.data[0]);
-          loadTasks(response.data[0].id);
-        }
       } else {
         setError('Failed to load projects');
       }
@@ -108,7 +117,15 @@ export const ApiProvider: React.FC<ApiProviderProps> = ({ children }) => {
       setError(null);
       const response = await mockApi.getTasks(projectId);
       if (response.success) {
-        // Add assignee details to tasks
+        // Add assignee details to tasks - make sure users are loaded first
+        const addAssigneeDetails = (task: Task): Task => {
+          const assigneeDetails = task.assignees.map(userId => 
+            users.find(u => u.id === userId)
+          ).filter(Boolean) as User[];
+          
+          return { ...task, assigneeDetails };
+        };
+
         const tasksWithDetails = {
           todo: response.data.todo.map(addAssigneeDetails),
           'in-progress': response.data['in-progress'].map(addAssigneeDetails),
@@ -124,15 +141,6 @@ export const ApiProvider: React.FC<ApiProviderProps> = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
-
-  // Helper function to add assignee details
-  const addAssigneeDetails = (task: Task): Task => {
-    const assigneeDetails = task.assignees.map(userId => 
-      users.find(u => u.id === userId)
-    ).filter(Boolean) as User[];
-    
-    return { ...task, assigneeDetails };
   };
 
   // Load users
@@ -173,7 +181,13 @@ export const ApiProvider: React.FC<ApiProviderProps> = ({ children }) => {
       setError(null);
       const response = await mockApi.createTask(taskData);
       if (response.success) {
-        const newTask = addAssigneeDetails(response.data);
+        // Add assignee details to the new task
+        const assigneeDetails = response.data.assignees.map(userId => 
+          users.find(u => u.id === userId)
+        ).filter(Boolean) as User[];
+        
+        const newTask = { ...response.data, assigneeDetails };
+        
         setTasks(prev => ({
           ...prev,
           [response.data.status]: [...prev[response.data.status], newTask]

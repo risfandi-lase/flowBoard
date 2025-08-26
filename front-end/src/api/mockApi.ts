@@ -29,17 +29,10 @@ let mockData: MockData = {
       title: "Campaign Website", 
       description: "Marketing campaign website for new product launch",
       color: "bg-error", 
-      taskCount: 1,
-      members: []
-    },
-    { 
-      id: 4, 
-      title: "Mobile App", 
-      description: "Cross-platform mobile application development",
-      color: "bg-info", 
       taskCount: 0,
       members: []
-    }
+    },
+   
   ],
   
   tasks: [
