@@ -31,6 +31,7 @@ export default function WebsiteRedesign() {
     categoryColor: "badge-info",
     borderColor: "border-amber-300",
     status: "todo" as const,
+    assignees: [] as number[], // Add assignees field
   });
 
   const getInitials = (name: string): string => {
@@ -68,6 +69,7 @@ export default function WebsiteRedesign() {
       categoryColor: "badge-info",
       borderColor: "border-amber-300",
       status: "todo",
+      assignees: [], // Reset assignees
     });
     setShowNewTaskForms({ ...showNewTaskForms, [status]: false });
   };
@@ -90,6 +92,16 @@ export default function WebsiteRedesign() {
     e.preventDefault();
     const taskId = parseInt(e.dataTransfer.getData("text/plain"));
     await moveTask(taskId, newStatus);
+  };
+
+  // Toggle assignee selection
+  const toggleAssignee = (userId: number) => {
+    setNewTaskData(prev => ({
+      ...prev,
+      assignees: prev.assignees.includes(userId)
+        ? prev.assignees.filter(id => id !== userId)
+        : [...prev.assignees, userId]
+    }));
   };
 
   const renderTaskCard = (task: Task) => (
@@ -201,6 +213,47 @@ export default function WebsiteRedesign() {
               </option>
             ))}
           </select>
+
+          {/* Assignee Selection */}
+          <div className="mb-2">
+            <label className="label label-text text-sm font-medium mb-1">
+              Assign to:
+            </label>
+            <div className="flex flex-wrap gap-2 max-h-24 overflow-y-auto border rounded-lg p-2">
+              {currentProject?.members.map((user: User) => (
+                <div
+                  key={user.id}
+                  className={`flex items-center gap-1 p-1 rounded-lg cursor-pointer transition-colors ${
+                    newTaskData.assignees.includes(user.id)
+                      ? "bg-primary text-white"
+                      : "bg-gray-100 hover:bg-gray-200"
+                  }`}
+                  onClick={() => toggleAssignee(user.id)}
+                >
+                  <img
+                    src={user.avatar}
+                    alt={user.name}
+                    className="w-6 h-6 rounded-full object-cover"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.style.display = "none";
+                      target.nextElementSibling?.classList.remove("hidden");
+                    }}
+                  />
+                  <div className="hidden w-6 h-6 rounded-full bg-gray-500 flex items-center justify-center text-white text-xs font-bold">
+                    {getInitials(user.name)}
+                  </div>
+                  <span className="text-xs truncate max-w-20">{user.name}</span>
+                </div>
+              ))}
+            </div>
+            {currentProject?.members.length === 0 && (
+              <p className="text-xs text-gray-400 mt-1">
+                No members in this project. Add members first.
+              </p>
+            )}
+          </div>
+
           <div className="flex gap-2">
             <button
               className="btn btn-primary btn-sm flex-1"

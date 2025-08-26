@@ -18,6 +18,7 @@ interface ApiContextType {
   loadTasks: (projectId: number) => Promise<void>;
   createProject: (projectData: Partial<Project>) => Promise<void>;
   createTask: (taskData: Partial<Task>) => Promise<void>;
+  createUser: (userData: Partial<User>) => Promise<User | null>;
   moveTask: (taskId: number, newStatus: 'todo' | 'in-progress' | 'completed') => Promise<void>;
   addMemberToProject: (projectId: number, userId: number) => Promise<void>;
   setCurrentProject: (project: Project) => void;
@@ -213,6 +214,28 @@ export const ApiProvider: React.FC<ApiProviderProps> = ({ children }) => {
     }
   };
 
+  // Create new user
+  const createUser = async (userData: Partial<User>): Promise<User | null> => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await mockApi.createUser(userData);
+      if (response.success) {
+        setUsers(prev => [...prev, response.data]);
+        return response.data;
+      } else {
+        setError('Failed to create user');
+        return null;
+      }
+    } catch (err) {
+      setError('Error creating user');
+      console.error(err);
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Move task between columns (drag and drop)
   const moveTask = async (taskId: number, newStatus: 'todo' | 'in-progress' | 'completed') => {
     try {
@@ -301,6 +324,7 @@ export const ApiProvider: React.FC<ApiProviderProps> = ({ children }) => {
     loadTasks,
     createProject,
     createTask,
+    createUser,
     moveTask,
     addMemberToProject,
     setCurrentProject

@@ -9,18 +9,22 @@ function Sidebar() {
   const [showNewProjectForm, setShowNewProjectForm] = useState(false);
   const [newProjectData, setNewProjectData] = useState({
     title: "",
-    description: "",
-    color: "bg-warning"
+    description: ""
   });
 
   const colors = [
-    { name: "Warning", value: "bg-warning" },
-    { name: "Success", value: "bg-success" },
-    { name: "Error", value: "bg-error" },
-    { name: "Info", value: "bg-info" },
-    { name: "Primary", value: "bg-primary" },
-    { name: "Secondary", value: "bg-secondary" }
+    "bg-warning",
+    "bg-success", 
+    "bg-error",
+    "bg-info",
+    "bg-primary",
+    "bg-secondary"
   ];
+
+  // Function to get a random color
+  const getRandomColor = () => {
+    return colors[Math.floor(Math.random() * colors.length)];
+  };
 
   const handleProjectClick = async (project: Project) => {
     setCurrentProject(project);
@@ -30,8 +34,11 @@ function Sidebar() {
   const handleCreateProject = async (e: React.FormEvent) => {
     e.preventDefault();
     if (newProjectData.title.trim()) {
-      await createProject(newProjectData);
-      setNewProjectData({ title: "", description: "", color: "bg-warning" });
+      await createProject({
+        ...newProjectData,
+        color: getRandomColor() // Randomly assign color
+      });
+      setNewProjectData({ title: "", description: "" });
       setShowNewProjectForm(false);
     }
   };
@@ -65,17 +72,6 @@ function Sidebar() {
               onChange={(e) => setNewProjectData(prev => ({ ...prev, description: e.target.value }))}
               rows={2}
             />
-            <select
-              className="select select-bordered w-full select-sm"
-              value={newProjectData.color}
-              onChange={(e) => setNewProjectData(prev => ({ ...prev, color: e.target.value }))}
-            >
-              {colors.map(color => (
-                <option key={color.value} value={color.value}>
-                  {color.name}
-                </option>
-              ))}
-            </select>
             <div className="flex gap-2">
               <button type="submit" className="btn btn-primary btn-sm flex-1">
                 Create
