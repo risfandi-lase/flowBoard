@@ -43,6 +43,31 @@ export default function WebsiteRedesign() {
       .slice(0, 2);
   };
 
+  // Helper function to format dates properly
+  const formatDate = (dateString: string | undefined): string => {
+    console.log('Formatting date:', dateString); // Debug log
+    
+    if (!dateString) return 'No date';
+    
+    try {
+      const date = new Date(dateString);
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        console.log('Invalid date detected:', dateString);
+        return 'Invalid date';
+      }
+      
+      return date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+      });
+    } catch (error) {
+      console.error('Error formatting date:', error, 'Input:', dateString);
+      return 'Invalid date';
+    }
+  };
+
   const categoryOptions = [
     { name: "DESIGN", color: "badge-info", border: "border-amber-300" },
     { name: "DEVELOPMENT", color: "badge-warning", border: "border-red-300" },
@@ -104,8 +129,18 @@ export default function WebsiteRedesign() {
     }));
   };
 
-  const renderTaskCard = (task: Task) => (
-    <figure key={task.id} className="p-3">
+  const renderTaskCard = (task: Task) => {
+    // Debug logging to see task data structure
+    console.log('Task data:', {
+      id: task.id,
+      category: task.category,
+      categoryColor: task.categoryColor,
+      borderColor: task.borderColor,
+      createdAt: task.createdAt
+    });
+
+    return (
+      <figure key={task.id} className="p-3">
       <div
         className="card bg-base-100 w-96 shadow-lg border-dashed border-1 border-gray-400 hover:shadow-lg hover:scale-102 cursor-grab transition-transform duration-500 group"
         draggable
@@ -129,7 +164,7 @@ export default function WebsiteRedesign() {
           
           <p className="text-md text-gray-400">{task.description}</p>
 
-          <div className={`badge ${task.categoryColor} text-white`}>
+          <div className={`badge ${task.categoryColor} text-white mb-2`}>
             {task.category}
           </div>
           <div className="flex items-center">
@@ -159,12 +194,13 @@ export default function WebsiteRedesign() {
               ))}
           </div>
           <div className="card-actions justify-end">
-            {new Date(task.createdAt).toLocaleDateString()}
+            {formatDate(task.createdAt)}
           </div>
         </div>
       </div>
     </figure>
   );
+};
 
   const renderNewTaskForm = (status: "todo" | "in-progress" | "completed") => (
     <div className="p-3">
