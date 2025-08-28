@@ -1,6 +1,7 @@
 // src/contexts/ApiContext.tsx
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { mockApi } from '../api/api'; // Now importing the real API
+import toast from 'react-hot-toast';
 import type { User, Project, Task, GroupedTasks } from '../types/api';
 
 interface ApiContextType {
@@ -21,6 +22,8 @@ interface ApiContextType {
   createUser: (userData: Partial<User>) => Promise<User | null>;
   moveTask: (taskId: number, newStatus: 'todo' | 'in-progress' | 'completed') => Promise<void>;
   addMemberToProject: (projectId: number, userId: number) => Promise<void>;
+  deleteTask: (taskId: number) => Promise<void>;
+  deleteProject: (projectId: number) => Promise<void>;
   setCurrentProject: (project: Project) => void;
 }
 
@@ -190,13 +193,16 @@ export const ApiProvider: React.FC<ApiProviderProps> = ({ children }) => {
       if (response.success) {
         console.log('Project created:', response.data);
         setProjects(prev => [...prev, response.data]);
+        toast.success(`Project "${response.data.title}" created successfully!`);
       } else {
         console.error('Failed to create project:', response.error);
         setError(response.error || 'Failed to create project');
+        toast.error(response.error || 'Failed to create project');
       }
     } catch (err) {
       console.error('Error creating project:', err);
       setError('Error creating project');
+      toast.error('Error creating project');
     } finally {
       setLoading(false);
     }
@@ -230,13 +236,17 @@ export const ApiProvider: React.FC<ApiProviderProps> = ({ children }) => {
               : p
           ));
         }
+        
+        toast.success(`Task "${newTask.title}" created successfully!`);
       } else {
         console.error('Failed to create task:', response.error);
         setError(response.error || 'Failed to create task');
+        toast.error(response.error || 'Failed to create task');
       }
     } catch (err) {
       console.error('Error creating task:', err);
       setError('Error creating task');
+      toast.error('Error creating task');
     } finally {
       setLoading(false);
     }
@@ -325,6 +335,107 @@ export const ApiProvider: React.FC<ApiProviderProps> = ({ children }) => {
     }
   };
 
+  // Delete task
+  const deleteTask = async (taskId: number) => {
+    try {
+      setLoading(true);
+      setError(null);
+      console.log('Deleting task:', taskId);
+      
+      // Optimistically update UI first (remove from local state immediately)
+      let deletedTask: Task | null = null;
+      setTasks(prev => {
+        const newTasks = { ...prev };
+        
+        // Find and remove task from current status
+        for (const status of ['todo', 'in-progress', 'completed'] as const) {
+          const taskIndex = newTasks[status].findIndex(t => t.id === taskId);
+          if (taskIndex !== -1) {
+            deletedTask = newTasks[status][taskIndex];
+            newTasks[status] = newTasks[status].filter(t => t.id !== taskId);
+            break;
+          }
+        }
+        
+        return newTasks;
+      });
+      
+      // Update project task count immediately
+      if (deletedTask && currentProject && currentProject.id === deletedTask.projectId) {
+        const newTaskCount = Math.max((currentProject.taskCount || 0) - 1, 0);
+        setCurrentProject(prev => prev ? { ...prev, taskCount: newTaskCount } : null);
+        setProjects(prev => prev.map(p => 
+          p.id === deletedTask.projectId 
+            ? { ...p, taskCount: newTaskCount }
+            : p
+        ));
+      }
+      
+      // Then call the API
+      const response = await mockApi.deleteTask(taskId);
+      if (response.success) {
+        toast.success('Task deleted successfully!');
+      } else {
+        // If API call fails, revert the UI changes
+        console.error('Failed to delete task:', response.error);
+        if (currentProject) {
+          await loadTasks(currentProject.id); // Reload to revert changes
+        }
+        toast.error(response.error || 'Failed to delete task');
+      }
+    } catch (err) {
+      console.error('Error deleting task:', err);
+      // Revert UI changes on error
+      if (currentProject) {
+        await loadTasks(currentProject.id);
+      }
+      toast.error('Error deleting task');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Delete project
+  const deleteProject = async (projectId: number) => {
+    try {
+      setLoading(true);
+      setError(null);
+      console.log('Deleting project:', projectId);
+      
+      const projectToDelete = projects.find(p => p.id === projectId);
+      const response = await mockApi.deleteProject(projectId);
+      
+      if (response.success) {
+        // Remove project from local state
+        setProjects(prev => prev.filter(p => p.id !== projectId));
+        
+        // If this was the current project, set a new current project
+        if (currentProject && currentProject.id === projectId) {
+          const remainingProjects = projects.filter(p => p.id !== projectId);
+          if (remainingProjects.length > 0) {
+            setCurrentProject(remainingProjects[0]);
+            loadTasks(remainingProjects[0].id);
+          } else {
+            setCurrentProject(null);
+            setTasks({ todo: [], 'in-progress': [], completed: [] });
+          }
+        }
+        
+        toast.success(`Project "${projectToDelete?.title || 'Unknown'}" deleted successfully!`);
+      } else {
+        console.error('Failed to delete project:', response.error);
+        setError(response.error || 'Failed to delete project');
+        toast.error(response.error || 'Failed to delete project');
+      }
+    } catch (err) {
+      console.error('Error deleting project:', err);
+      setError('Error deleting project');
+      toast.error('Error deleting project');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Add member to project
   const addMemberToProject = async (projectId: number, userId: number) => {
     try {
@@ -373,6 +484,8 @@ export const ApiProvider: React.FC<ApiProviderProps> = ({ children }) => {
     createUser,
     moveTask,
     addMemberToProject,
+    deleteTask,
+    deleteProject,
     setCurrentProject
   };
 

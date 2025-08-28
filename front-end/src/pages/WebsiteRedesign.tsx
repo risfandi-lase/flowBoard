@@ -13,7 +13,9 @@ export default function WebsiteRedesign() {
     createTask,
     moveTask,
     addMemberToProject,
+    deleteTask,
     users,
+    loading,
   } = useApi();
   const [showNewTaskForms, setShowNewTaskForms] = useState<{
     todo: boolean;
@@ -31,7 +33,7 @@ export default function WebsiteRedesign() {
     categoryColor: "badge-info",
     borderColor: "border-amber-300",
     status: "todo" as const,
-    assignees: [] as number[], // Add assignees field
+    assignees: [] as number[],
   });
 
   const getInitials = (name: string): string => {
@@ -45,13 +47,12 @@ export default function WebsiteRedesign() {
 
   // Helper function to format dates properly
   const formatDate = (dateString: string | undefined): string => {
-    console.log('Formatting date:', dateString); // Debug log
+    console.log('Formatting date:', dateString);
     
     if (!dateString) return 'No date';
     
     try {
       const date = new Date(dateString);
-      // Check if date is valid
       if (isNaN(date.getTime())) {
         console.log('Invalid date detected:', dateString);
         return 'Invalid date';
@@ -94,7 +95,7 @@ export default function WebsiteRedesign() {
       categoryColor: "badge-info",
       borderColor: "border-amber-300",
       status: "todo",
-      assignees: [], // Reset assignees
+      assignees: [],
     });
     setShowNewTaskForms({ ...showNewTaskForms, [status]: false });
   };
@@ -130,7 +131,6 @@ export default function WebsiteRedesign() {
   };
 
   const renderTaskCard = (task: Task) => {
-    // Debug logging to see task data structure
     console.log('Task data:', {
       id: task.id,
       category: task.category,
@@ -141,66 +141,75 @@ export default function WebsiteRedesign() {
 
     return (
       <figure key={task.id} className="p-3">
-      <div
-        className="card bg-base-100 w-96 shadow-lg border-dashed border-1 border-gray-400 hover:shadow-lg hover:scale-102 cursor-grab transition-transform duration-500 group"
-        draggable
-        onDragStart={(e) => handleDragStart(e, task.id)}
-      >
         <div
-          className={`card-body p-3 border-l-8 rounded-2xl ${task.borderColor}`}
+          className="card bg-base-100 w-96 shadow-lg border-dashed border-1 border-gray-400 hover:shadow-lg hover:scale-102 cursor-grab transition-transform duration-500 group"
+          draggable
+          onDragStart={(e) => handleDragStart(e, task.id)}
         >
-          {/* Title and Delete Icon Row */}
-          <div className="flex items-start justify-between mb-2">
-            <h2 className="card-title text-sm font-semibold flex-1 mr-2">{task.title}</h2>
-            <button className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex-shrink-0">
-              <Icon
-                icon="mdi-light:delete"
-                width="20"
-                className="cursor-pointer"
-                style={{ color: "#f03030" }}
-              />
-            </button>
-          </div>
-          
-          <p className="text-md text-gray-400">{task.description}</p>
+          <div
+            className={`card-body p-3 border-l-8 rounded-2xl ${task.borderColor}`}
+          >
+            {/* Title and Delete Icon Row */}
+            <div className="flex items-start justify-between mb-2">
+              <h2 className="card-title text-sm font-semibold flex-1 mr-2">{task.title}</h2>
+              <button 
+                className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex-shrink-0"
+                onClick={async (e) => {
+                  e.stopPropagation();
+                  if (window.confirm('Are you sure you want to delete this task?')) {
+                    await deleteTask(task.id);
+                  }
+                }}
+                disabled={loading}
+              >
+                <Icon
+                  icon="mdi-light:delete"
+                  width="20"
+                  className={`cursor-pointer ${loading ? 'text-gray-400' : 'hover:text-red-500'}`}
+                  style={{ color: loading ? "#999" : "#f03030" }}
+                />
+              </button>
+            </div>
+            
+            <p className="text-md text-gray-400">{task.description}</p>
 
-          <div className={`badge ${task.categoryColor} text-white mb-2`}>
-            {task.category}
-          </div>
-          <div className="flex items-center">
-            {task.assigneeDetails
-              ?.slice(0, 4)
-              .map((user: User, index: number) => (
-                <div
-                  key={user.id}
-                  className={`w-10 h-10 rounded-xl border-2 border-white shadow-sm ${
-                    index > 0 ? "-ml-3" : ""
-                  }`}
-                >
-                  <img
-                    src={user.avatar}
-                    alt={user.name}
-                    className="w-10 h-10 rounded-xl object-cover"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.style.display = "none";
-                      target.nextElementSibling?.classList.remove("hidden");
-                    }}
-                  />
-                  <div className="hidden w-full h-full rounded-xl bg-gray-500 flex items-center justify-center text-white font-bold text-sm">
-                    {getInitials(user.name)}
+            <div className={`badge ${task.categoryColor} text-white mb-2`}>
+              {task.category}
+            </div>
+            <div className="flex items-center">
+              {task.assigneeDetails
+                ?.slice(0, 4)
+                .map((user: User, index: number) => (
+                  <div
+                    key={user.id}
+                    className={`w-10 h-10 rounded-xl border-2 border-white shadow-sm ${
+                      index > 0 ? "-ml-3" : ""
+                    }`}
+                  >
+                    <img
+                      src={user.avatar}
+                      alt={user.name}
+                      className="w-10 h-10 rounded-xl object-cover"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = "none";
+                        target.nextElementSibling?.classList.remove("hidden");
+                      }}
+                    />
+                    <div className="hidden w-full h-full rounded-xl bg-gray-500 flex items-center justify-center text-white font-bold text-sm">
+                      {getInitials(user.name)}
+                    </div>
                   </div>
-                </div>
-              ))}
-          </div>
-          <div className="card-actions justify-end">
-            {formatDate(task.createdAt)}
+                ))}
+            </div>
+            <div className="card-actions justify-end">
+              {formatDate(task.createdAt)}
+            </div>
           </div>
         </div>
-      </div>
-    </figure>
-  );
-};
+      </figure>
+    );
+  };
 
   const renderNewTaskForm = (status: "todo" | "in-progress" | "completed") => (
     <div className="p-3">
@@ -214,6 +223,7 @@ export default function WebsiteRedesign() {
             onChange={(e) =>
               setNewTaskData((prev) => ({ ...prev, title: e.target.value }))
             }
+            disabled={loading}
           />
           <textarea
             placeholder="Task description"
@@ -226,6 +236,7 @@ export default function WebsiteRedesign() {
                 description: e.target.value,
               }))
             }
+            disabled={loading}
           />
 
           <select
@@ -242,6 +253,7 @@ export default function WebsiteRedesign() {
                 borderColor: selected?.border || "border-amber-300",
               }));
             }}
+            disabled={loading}
           >
             {categoryOptions.map((cat) => (
               <option key={cat.name} value={cat.name}>
@@ -292,16 +304,25 @@ export default function WebsiteRedesign() {
 
           <div className="flex gap-2">
             <button
-              className="btn btn-primary btn-sm flex-1"
+              className={`btn btn-sm flex-1 ${loading ? 'btn-disabled' : 'btn-primary'}`}
               onClick={() => handleCreateTask(status)}
+              disabled={loading}
             >
-              Create Task
+              {loading ? (
+                <>
+                  <span className="loading loading-spinner loading-xs"></span>
+                  Creating...
+                </>
+              ) : (
+                "Create Task"
+              )}
             </button>
             <button
               className="btn btn-ghost btn-sm flex-1"
               onClick={() =>
                 setShowNewTaskForms({ ...showNewTaskForms, [status]: false })
               }
+              disabled={loading}
             >
               Cancel
             </button>
@@ -417,7 +438,7 @@ export default function WebsiteRedesign() {
         </div>
       </div>
 
-      {/*///////////////////////////////////// CARDS  */}
+      {/* CARDS */}
       <div className="flex mt-10 px-6 justify-between">
         {renderColumn(
           "TO DO!",
