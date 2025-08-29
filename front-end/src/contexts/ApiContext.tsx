@@ -413,8 +413,11 @@ export const ApiProvider: React.FC<ApiProviderProps> = ({ children }) => {
         if (currentProject && currentProject.id === projectId) {
           const remainingProjects = projects.filter(p => p.id !== projectId);
           if (remainingProjects.length > 0) {
-            setCurrentProject(remainingProjects[0]);
-            loadTasks(remainingProjects[0].id);
+            const newProject = remainingProjects[0];
+            if (newProject) {
+              setCurrentProject(newProject);
+              loadTasks(newProject.id);
+            }
           } else {
             setCurrentProject(null);
             setTasks({ todo: [], 'in-progress': [], completed: [] });
