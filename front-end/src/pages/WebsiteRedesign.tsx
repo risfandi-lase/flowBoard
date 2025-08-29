@@ -13,6 +13,7 @@ export default function WebsiteRedesign() {
     createTask,
     moveTask,
     deleteTask,
+    users,
     loading,
   } = useApi();
   const [showNewTaskForms, setShowNewTaskForms] = useState<{
@@ -357,7 +358,7 @@ export default function WebsiteRedesign() {
       {showNewTaskForms[status] && renderNewTaskForm(status)}
 
       <button
-        className="btn btn-dash rounded-xl text-xs w-114 mt-4 mb-8 text-gray-400"
+        className="btn btn-dash rounded-xl text-xs w-full mt-4 mb-8 text-gray-400"
         onClick={() =>
           setShowNewTaskForms({ ...showNewTaskForms, [status]: true })
         }
@@ -389,7 +390,7 @@ export default function WebsiteRedesign() {
   }
 
   return (
-    <div className="bg-base-100 border-2 border-gray-300/30 rounded-4xl p-4 shadow-md">
+    <div className="bg-base-100 border-2 border-gray-300/30 rounded-4xl  shadow-md">
       {/* HEAD PROJECT TITLE */}
       <div className="p-6">
         <h1 className="text-2xl text-[#4a4283] font-bold">{currentProject.title}</h1>
@@ -436,7 +437,7 @@ export default function WebsiteRedesign() {
       </div>
 
       {/* CARDS */}
-      <div className="flex mt-10 px-6 text-black justify-between">
+      <div className="flex mt-10 text-black justify-between">
         {renderColumn(
           "TO DO!",
           "todo",

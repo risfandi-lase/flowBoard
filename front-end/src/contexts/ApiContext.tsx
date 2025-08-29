@@ -79,7 +79,6 @@ export const ApiProvider: React.FC<ApiProviderProps> = ({ children }) => {
   // Load initial data
   useEffect(() => {
     const initializeData = async () => {
-      console.log("Initializing data from real API...");
       // Load users first
       await loadUsers();
       // Then load projects
@@ -92,7 +91,6 @@ export const ApiProvider: React.FC<ApiProviderProps> = ({ children }) => {
   // Load projects and set initial project
   useEffect(() => {
     if (projects.length > 0 && !currentProject && users.length > 0) {
-      console.log("Setting initial project:", projects[0]);
       setCurrentProject(projects[0]);
       loadTasks(projects[0].id);
     }
@@ -103,11 +101,9 @@ export const ApiProvider: React.FC<ApiProviderProps> = ({ children }) => {
     try {
       setLoading(true);
       setError(null);
-      console.log("Loading projects from API...");
 
       const response = await mockApi.getProjects();
       if (response.success && response.data) {
-        console.log("Projects loaded:", response.data);
         setProjects(response.data);
       } else {
         console.error("Failed to load projects:", response.error);
@@ -126,11 +122,9 @@ export const ApiProvider: React.FC<ApiProviderProps> = ({ children }) => {
     try {
       setLoading(true);
       setError(null);
-      console.log("Loading project:", projectId);
 
       const response = await mockApi.getProject(projectId);
       if (response.success && response.data) {
-        console.log("Project loaded:", response.data);
         setCurrentProject(response.data);
         await loadTasks(projectId);
       } else {
@@ -150,7 +144,6 @@ export const ApiProvider: React.FC<ApiProviderProps> = ({ children }) => {
     try {
       setLoading(true);
       setError(null);
-      console.log("Loading tasks for project:", projectId);
 
       const response = await mockApi.getTasks(projectId);
       if (response.success && response.data) {
@@ -160,7 +153,6 @@ export const ApiProvider: React.FC<ApiProviderProps> = ({ children }) => {
           completed: convertTasks(response.data.completed || []),
         };
 
-        console.log("Tasks loaded and converted:", convertedTasks);
         setTasks(convertedTasks);
       } else {
         console.error("Failed to load tasks:", response.error);
@@ -177,11 +169,9 @@ export const ApiProvider: React.FC<ApiProviderProps> = ({ children }) => {
   // Load users
   const loadUsers = async () => {
     try {
-      console.log("Loading users from API...");
 
       const response = await mockApi.getUsers();
       if (response.success && response.data) {
-        console.log("Users loaded:", response.data);
         setUsers(response.data);
       } else {
         console.error("Failed to load users:", response.error);
@@ -196,13 +186,11 @@ export const ApiProvider: React.FC<ApiProviderProps> = ({ children }) => {
     try {
       setLoading(true);
       setError(null);
-      console.log("Creating project:", projectData);
 
       const response = await mockApi.createProject(projectData);
       if (response.success && response.data) {
-        console.log("Project created:", response.data);
         setProjects((prev) => [...prev, response.data!]);
-        toast.success(`Project "${response.data.title}" created successfully!`);
+        toast.success(`Project "'${response.data.title}'" created successfully!`);
       } else {
         console.error("Failed to create project:", response.error);
         setError(response.error || "Failed to create project");
@@ -222,11 +210,9 @@ export const ApiProvider: React.FC<ApiProviderProps> = ({ children }) => {
     try {
       setLoading(true);
       setError(null);
-      console.log("Creating task:", taskData);
 
       const response = await mockApi.createTask(taskData);
       if (response.success && response.data) {
-        console.log("Task created:", response.data);
 
         const newTask = response.data;
 
@@ -248,7 +234,7 @@ export const ApiProvider: React.FC<ApiProviderProps> = ({ children }) => {
           );
         }
 
-        toast.success(`Task "${newTask.title}" created successfully!`);
+        toast.success(`Task "'${newTask.title}'" created successfully!`);
       } else {
         console.error("Failed to create task:", response.error);
         setError(response.error || "Failed to create task");
@@ -268,11 +254,9 @@ export const ApiProvider: React.FC<ApiProviderProps> = ({ children }) => {
     try {
       setLoading(true);
       setError(null);
-      console.log("Creating user:", userData);
 
       const response = await mockApi.createUser(userData);
       if (response.success && response.data) {
-        console.log("User created:", response.data);
         setUsers((prev) => [...prev, response.data!]);
         return response.data;
       } else {
@@ -296,7 +280,6 @@ export const ApiProvider: React.FC<ApiProviderProps> = ({ children }) => {
   ) => {
     try {
       setError(null);
-      console.log("Moving task:", taskId, "to", newStatus);
 
       // Optimistically update UI first - preserve assignee details
       let movedTask: Task | null = null;
@@ -337,7 +320,6 @@ export const ApiProvider: React.FC<ApiProviderProps> = ({ children }) => {
         }
         setError(response.error || "Failed to move task");
       } else {
-        console.log("Task moved successfully");
       }
     } catch (err) {
       console.error("Error moving task:", err);
@@ -354,7 +336,6 @@ export const ApiProvider: React.FC<ApiProviderProps> = ({ children }) => {
     try {
       setLoading(true);
       setError(null);
-      console.log("Deleting task:", taskId);
 
       // Find the task to be deleted first
       let deletedTask: Task | null = null;
@@ -430,7 +411,6 @@ export const ApiProvider: React.FC<ApiProviderProps> = ({ children }) => {
     try {
       setLoading(true);
       setError(null);
-      console.log("Deleting project:", projectId);
 
       const projectToDelete = projects.find((p) => p.id === projectId);
       const response = await mockApi.deleteProject(projectId);
@@ -455,9 +435,9 @@ export const ApiProvider: React.FC<ApiProviderProps> = ({ children }) => {
         }
 
         toast.success(
-          `Project "${
+          `Project "'${
             projectToDelete?.title || "Unknown"
-          }" deleted successfully!`
+          }'" deleted successfully!`
         );
       } else {
         console.error("Failed to delete project:", response.error);
@@ -478,11 +458,9 @@ export const ApiProvider: React.FC<ApiProviderProps> = ({ children }) => {
     try {
       setLoading(true);
       setError(null);
-      console.log("Adding member to project:", { projectId, userId });
 
       const response = await mockApi.addMemberToProject(projectId, userId);
       if (response.success && response.data) {
-        console.log("Member added to project:", response.data);
         // Update projects state
         setProjects((prev) =>
           prev.map((p) => (p.id === projectId ? response.data! : p))
