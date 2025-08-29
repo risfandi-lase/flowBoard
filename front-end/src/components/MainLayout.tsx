@@ -1,6 +1,4 @@
-import React from "react";
-import WebsiteRedesign from "../pages/websiteRedesign";
-import AddMemberModal from "../pages/addMemberModal";
+import WebsiteRedesign from "../pages/WebsiteRedesign";
 
 export default function MainLayout() {
   return (

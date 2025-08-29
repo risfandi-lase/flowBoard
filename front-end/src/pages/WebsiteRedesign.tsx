@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { Icon } from "@iconify/react/dist/iconify.js";
 import { useApi } from "../contexts/ApiContext";
 import type { Task, User } from "../types/api";
-import AddMemberModal from "./addMemberModal";
+import AddMemberModal from "./AddMemberModal";
 
 export default function WebsiteRedesign() {
   const [isModalOpen, setIsOpenModal] = useState(false);
@@ -12,9 +12,7 @@ export default function WebsiteRedesign() {
     tasks,
     createTask,
     moveTask,
-    addMemberToProject,
     deleteTask,
-    users,
     loading,
   } = useApi();
   const [showNewTaskForms, setShowNewTaskForms] = useState<{
