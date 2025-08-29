@@ -1,16 +1,17 @@
-import icon from "../assets/icon.png";
 import { Icon } from "@iconify/react/dist/iconify.js";
+import icon from "../assets/icon.png";
+import ava from "../assets/ava.jpg";
 
 function NavBar() {
   return (
-    <div className="bg-base-300 ">
+    <div className="bg-base-100 ">
       {/* TOP-BAR */}
-      <div className="navbar px-36 shadow-md">
+      <div className="navbar px-36 py-4 shadow-md">
         {/* Left side - Logo and title */}
         <div className="navbar-start">
           <div className="flex items-center gap-2">
             <img src={icon} alt="FlowBoard Logo" className="w-10" />
-            <p className="text-3xl font-semibold">FlowBoard</p>
+            <p className="text-3xl text-[#514899] font-semibold">FlowBoard</p>
           </div>
         </div>
 
@@ -58,8 +59,8 @@ function NavBar() {
           <div className="flex items-center gap-2 ">
             <img
               alt="User avatar"
-              src="https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp"
-              className="rounded-2xl w-12"
+              src={ava}
+              className="rounded-2xl w-12 h-12 object-cover"
             />
             <div className="text-sm">
               <p className="font-semibold">Risfandi Lase</p>
@@ -68,7 +69,6 @@ function NavBar() {
           </div>
         </div>
       </div>
-      <div className="w-full h-0.5 bg-gray-300 shadow-md rounded"></div>{" "}
 
       
     </div>

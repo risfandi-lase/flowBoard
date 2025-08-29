@@ -31,7 +31,7 @@ export default function WebsiteRedesign() {
     description: "",
     category: "DESIGN",
     categoryColor: "badge-info",
-    borderColor: "border-amber-300",
+    borderColor: "border-red-300",
     status: "todo" as const,
     assignees: [] as number[],
   });
@@ -142,7 +142,7 @@ export default function WebsiteRedesign() {
     return (
       <figure key={task.id} className="p-3">
         <div
-          className="card bg-base-100 w-96 shadow-lg border-dashed border-1 border-gray-400 hover:shadow-lg hover:scale-102 cursor-grab transition-transform duration-500 group"
+          className="card bg-base-100 w-114 shadow-md border-dashed border-1 border-gray-400 hover:shadow-lg hover:scale-102 cursor-grab transition-transform duration-500 group"
           draggable
           onDragStart={(e) => handleDragStart(e, task.id)}
         >
@@ -151,8 +151,7 @@ export default function WebsiteRedesign() {
           >
             {/* Title and Delete Icon Row */}
             <div className="flex items-start justify-between mb-2">
-              <h2 className="card-title text-sm font-semibold flex-1 mr-2">{task.title}</h2>
-              <button 
+            <h2 className="card-title text-sm font-semibold flex-1 mr-2 break-words overflow-hidden line-clamp-2">{task.title}</h2>              <button 
                 className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex-shrink-0"
                 onClick={async (e) => {
                   e.stopPropagation();
@@ -171,7 +170,7 @@ export default function WebsiteRedesign() {
               </button>
             </div>
             
-            <p className="text-md text-gray-400">{task.description}</p>
+ <p className="text-md text-gray-400 break-words overflow-wrap-anywhere">{task.description}</p>
 
             <div className={`badge ${task.categoryColor} text-white mb-2`}>
               {task.category}
@@ -213,7 +212,7 @@ export default function WebsiteRedesign() {
 
   const renderNewTaskForm = (status: "todo" | "in-progress" | "completed") => (
     <div className="p-3">
-      <div className="card bg-base-100 w-96 shadow-lg border-2 border-dashed border-primary">
+      <div className="card bg-base-100 w-114 shadow-lg border-1 border-dashed border-primary">
         <div className="card-body p-3">
           <input
             type="text"
@@ -340,7 +339,7 @@ export default function WebsiteRedesign() {
     tasksArray: Task[]
   ) => (
     <div
-      className="card bg-base-100 rounded-2xl items-center h-full w-106 shadow-sm"
+      className="card bg-base-100 border-gray-300/50 border-2 rounded-2xl items-center h-full w-120 shadow-xl"
       onDragOver={handleDragOver}
       onDrop={(e) => handleDrop(e, status)}
     >
@@ -349,9 +348,9 @@ export default function WebsiteRedesign() {
       >
         <div className="flex items-center">
           <Icon icon={icon} width="30" style={{ color: "#fff" }} />
-          <h2 className="text-xl font-bold ml-2">{title}</h2>
+          <h2 className="text-xl text-white font-bold ml-2">{title}</h2>
         </div>
-        <p className="text-xl font-bold absolute top-6 right-6">
+        <p className="text-xl bg-white/20 text-white px-2 rounded-lg font-bold absolute top-6 right-6">
           {tasksArray.length}
         </p>
       </div>
@@ -360,7 +359,7 @@ export default function WebsiteRedesign() {
       {showNewTaskForms[status] && renderNewTaskForm(status)}
 
       <button
-        className="btn btn-dash rounded-xl text-xs w-96 mt-4 mb-8 text-gray-400"
+        className="btn btn-dash rounded-xl text-xs w-114 mt-4 mb-8 text-gray-400"
         onClick={() =>
           setShowNewTaskForms({ ...showNewTaskForms, [status]: true })
         }
@@ -373,7 +372,7 @@ export default function WebsiteRedesign() {
 
   if (!currentProject) {
     return (
-      <div className="bg-base-300 rounded-4xl p-4 shadow-sm">
+      <div className="bg-base-100 rounded-4xl p-4 shadow-sm">
         <div className="flex items-center justify-center h-96">
           <div className="text-center">
             <Icon
@@ -392,15 +391,15 @@ export default function WebsiteRedesign() {
   }
 
   return (
-    <div className="bg-base-300 rounded-4xl p-4 shadow-sm">
+    <div className="bg-base-100 border-2 border-gray-300/30 rounded-4xl p-4 shadow-md">
       {/* HEAD PROJECT TITLE */}
       <div className="p-6">
-        <h1 className="text-2xl font-bold">{currentProject.title}</h1>
-        <p className="text-lg mt-2">{currentProject.description}</p>
+        <h1 className="text-2xl text-[#4a4283] font-bold">{currentProject.title}</h1>
+        <p className="text-lg text-[#4a4283] mt-2">{currentProject.description}</p>
 
         {/* Avatar */}
         <div>
-          <div className="flex items-center justify-between mt-6">
+          <div className="flex items-center gap-15 mt-6">
             <div className="flex items-center">
               {currentProject.members?.map((user: User, index: number) => (
                 <div
@@ -426,39 +425,39 @@ export default function WebsiteRedesign() {
               ))}
             </div>
 
-            <button onClick={openModal} className="btn btn-secondary">
+            <button onClick={openModal} className="btn bg-[#453D82] shadow-md">
               <Icon
                 icon="ic:baseline-plus"
                 width="20"
                 style={{ color: " #fff" }}
               />
-              Add Member
+              <p className="text-white">Add Member</p>
             </button>
           </div>
         </div>
       </div>
 
       {/* CARDS */}
-      <div className="flex mt-10 px-6 justify-between">
+      <div className="flex mt-10 px-6 text-black justify-between">
         {renderColumn(
           "TO DO!",
           "todo",
           "ri:todo-line",
-          "bg-primary",
+          "bg-gradient-to-r from-[#6aa8ff] to-[#7ed7f5]",
           tasks.todo
         )}
         {renderColumn(
           "IN PROGRESS",
           "in-progress",
           "tabler:progress",
-          "bg-secondary",
+          "bg-gradient-to-r from-[#ff80a9] to-[#ef5ca4]",
           tasks["in-progress"]
         )}
         {renderColumn(
           "COMPLETED",
           "completed",
           "octicon:tracked-by-closed-completed-16",
-          "bg-accent",
+          "bg-gradient-to-l from-[#ffdd55] to-[#ffb555]",
           tasks.completed
         )}
       </div>

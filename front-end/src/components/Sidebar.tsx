@@ -70,10 +70,10 @@ function Sidebar() {
   }, [showDeleteMenu]);
 
   return (
-    <div className="bg-base-300 py-2 w-72 h-full rounded-4xl shadow-sm flex flex-col">
+    <div className="bg-base-100 py-2 w-72 h-full rounded-4xl border border-gray-200 shadow-xl flex flex-col">
       <div className="flex-1 px-4">
         <button 
-          className={`btn mt-6 w-full ${loading ? 'btn-disabled' : 'btn-primary'}`}
+          className={`btn mt-6 w-full ${loading ? 'btn-disabled' : 'btn-primary shadow-md '}`}
           onClick={() => !loading && setShowNewProjectForm(!showNewProjectForm)}
           disabled={loading}
         >
@@ -85,7 +85,7 @@ function Sidebar() {
           ) : (
             <>
               <Icon icon="ic:baseline-plus" width="20" style={{ color: " #fff" }} />
-              New Project
+              <p className="text-white">New Project</p>
             </>
           )}
         </button>
@@ -137,7 +137,7 @@ function Sidebar() {
           </form>
         )}
 
-        <p className="mt-10">PROJECTS</p>
+        <p className="mt-10 font-semibold text-[#342e60]">PROJECTS</p>
 
         <div className="mt-2 flex flex-col gap-5">
           {projects.map((project) => (
@@ -146,7 +146,7 @@ function Sidebar() {
               className="relative"
             >
               <div
-                className={`flex items-center gap-2 hover:bg-primary hover:rounded-xl p-2 rounded cursor-pointer transition-colors ${
+                className={`flex items-center gap-2 hover:bg-primary/20 hover:rounded p-2 rounded cursor-pointer transition-colors ${
                   currentProject?.id === project.id ? 'bg-primary text-white' : ''
                 } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
                 onClick={() => handleProjectClick(project)}
@@ -154,7 +154,7 @@ function Sidebar() {
               >
                 <div className={`w-2 h-2 ${project.color} rounded-full`}></div>
                 <p className="flex-1 truncate">{project.title}</p>
-                <span className="ml-auto">{project.taskCount || 0}</span>
+                <span className="ml-auto  px-2 text-white bg-primary/30 rounded text-xs">{project.taskCount || 0}</span>
                 
                 {/* Three dots menu button */}
                 <button
@@ -172,7 +172,7 @@ function Sidebar() {
               {showDeleteMenu === project.id && (
                 <div className="absolute right-0 top-10 bg-white shadow-lg border rounded-lg z-10 py-1 min-w-32">
                   <button
-                    className="w-full px-3 py-2 text-left text-red-600 hover:bg-red-50 flex items-center gap-2 text-sm"
+                    className="w-full px-3 py-2 text-left text-red-600 hover:cursor-pointer flex items-center gap-2 text-sm"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleDeleteProject(project.id);

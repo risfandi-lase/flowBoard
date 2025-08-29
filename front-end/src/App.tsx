@@ -10,17 +10,17 @@ function App() {
     <ApiProvider>
       <div
         data-theme="cmyk"
-        className="bg-base-100 h-screen flex flex-col overflow-hidden"
+        className="bg-base-300 h-screen flex flex-col overflow-hidden"
       >
         <div className="flex-shrink-0">
           <NavBar />
         </div>
 
         <div className="flex flex-1 overflow-hidden gap-8">
-          <div className="py-10 pl-10 flex-shrink-0">
+          <div className="py-10 pl-24 flex-shrink-0">
             <Sidebar />
           </div>
-          <div className=" flex-1 py-10 pr-10 overflow-auto">
+          <div className=" flex-1 py-10 pr-24 overflow-auto">
             <MainLayout />
           </div>
         </div>
