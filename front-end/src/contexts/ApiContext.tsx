@@ -64,6 +64,18 @@ export const ApiProvider: React.FC<ApiProviderProps> = ({ children }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Helper function to convert snake_case to camelCase for tasks
+  const convertTasks = (taskList: Task[]): Task[] =>
+    taskList.map((task: any) => ({
+      ...task,
+      projectId: task.project_id || task.projectId,
+      categoryColor: task.category_color || task.categoryColor,
+      borderColor: task.border_color || task.borderColor,
+      createdAt: task.created_at || task.createdAt,
+      updatedAt: task.updated_at || task.updatedAt,
+      assigneeDetails: task.assignee_details || task.assigneeDetails || [],
+    }));
+
   // Load initial data
   useEffect(() => {
     const initializeData = async () => {
@@ -94,12 +106,9 @@ export const ApiProvider: React.FC<ApiProviderProps> = ({ children }) => {
       console.log("Loading projects from API...");
 
       const response = await mockApi.getProjects();
-      if (response.success) {
+      if (response.success && response.data) {
         console.log("Projects loaded:", response.data);
         setProjects(response.data);
-        if (response.success && response.data) {
-          setProjects(response.data);
-        }
       } else {
         console.error("Failed to load projects:", response.error);
         setError(response.error || "Failed to load projects");
@@ -121,9 +130,6 @@ export const ApiProvider: React.FC<ApiProviderProps> = ({ children }) => {
 
       const response = await mockApi.getProject(projectId);
       if (response.success && response.data) {
-        setCurrentProject(response.data);
-      }
-      if (response.success) {
         console.log("Project loaded:", response.data);
         setCurrentProject(response.data);
         await loadTasks(projectId);
@@ -153,27 +159,6 @@ export const ApiProvider: React.FC<ApiProviderProps> = ({ children }) => {
           "in-progress": convertTasks(response.data["in-progress"] || []),
           completed: convertTasks(response.data.completed || []),
         };
-        setTasks(convertedTasks);
-      }
-      if (response.success) {
-        // Ensure all field conversions are applied consistently
-        const convertTasks = (taskList: Task[]) =>
-          taskList.map((task) => ({
-            ...task,
-            projectId: task.project_id || task.projectId,
-            categoryColor: task.category_color || task.categoryColor,
-            borderColor: task.border_color || task.borderColor,
-            createdAt: task.created_at || task.createdAt,
-            updatedAt: task.updated_at || task.updatedAt,
-            assigneeDetails:
-              task.assignee_details || task.assigneeDetails || [],
-          }));
-
-        const convertedTasks = {
-          todo: convertTasks(response.data.todo || []),
-          "in-progress": convertTasks(response.data["in-progress"] || []),
-          completed: convertTasks(response.data.completed || []),
-        };
 
         console.log("Tasks loaded and converted:", convertedTasks);
         setTasks(convertedTasks);
@@ -195,7 +180,7 @@ export const ApiProvider: React.FC<ApiProviderProps> = ({ children }) => {
       console.log("Loading users from API...");
 
       const response = await mockApi.getUsers();
-      if (response.success) {
+      if (response.success && response.data) {
         console.log("Users loaded:", response.data);
         setUsers(response.data);
       } else {
@@ -214,9 +199,9 @@ export const ApiProvider: React.FC<ApiProviderProps> = ({ children }) => {
       console.log("Creating project:", projectData);
 
       const response = await mockApi.createProject(projectData);
-      if (response.success) {
+      if (response.success && response.data) {
         console.log("Project created:", response.data);
-        setProjects((prev) => [...prev, response.data]);
+        setProjects((prev) => [...prev, response.data!]);
         toast.success(`Project "${response.data.title}" created successfully!`);
       } else {
         console.error("Failed to create project:", response.error);
@@ -240,7 +225,7 @@ export const ApiProvider: React.FC<ApiProviderProps> = ({ children }) => {
       console.log("Creating task:", taskData);
 
       const response = await mockApi.createTask(taskData);
-      if (response.success) {
+      if (response.success && response.data) {
         console.log("Task created:", response.data);
 
         const newTask = response.data;
@@ -286,9 +271,9 @@ export const ApiProvider: React.FC<ApiProviderProps> = ({ children }) => {
       console.log("Creating user:", userData);
 
       const response = await mockApi.createUser(userData);
-      if (response.success) {
+      if (response.success && response.data) {
         console.log("User created:", response.data);
-        setUsers((prev) => [...prev, response.data]);
+        setUsers((prev) => [...prev, response.data!]);
         return response.data;
       } else {
         console.error("Failed to create user:", response.error);
@@ -371,8 +356,17 @@ export const ApiProvider: React.FC<ApiProviderProps> = ({ children }) => {
       setError(null);
       console.log("Deleting task:", taskId);
 
-      // Optimistically update UI first (remove from local state immediately)
+      // Find the task to be deleted first
       let deletedTask: Task | null = null;
+      for (const status of ["todo", "in-progress", "completed"] as const) {
+        const task = tasks[status].find((t) => t.id === taskId);
+        if (task) {
+          deletedTask = task;
+          break;
+        }
+      }
+
+      // Optimistically update UI first (remove from local state immediately)
       setTasks((prev) => {
         const newTasks = { ...prev };
 
@@ -380,7 +374,6 @@ export const ApiProvider: React.FC<ApiProviderProps> = ({ children }) => {
         for (const status of ["todo", "in-progress", "completed"] as const) {
           const taskIndex = newTasks[status].findIndex((t) => t.id === taskId);
           if (taskIndex !== -1) {
-            deletedTask = newTasks[status][taskIndex];
             newTasks[status] = newTasks[status].filter((t) => t.id !== taskId);
             break;
           }
@@ -401,7 +394,7 @@ export const ApiProvider: React.FC<ApiProviderProps> = ({ children }) => {
         );
         setProjects((prev) =>
           prev.map((p) =>
-            p.id === deletedTask.projectId
+            p.id === deletedTask!.projectId
               ? { ...p, taskCount: newTaskCount }
               : p
           )
@@ -488,11 +481,11 @@ export const ApiProvider: React.FC<ApiProviderProps> = ({ children }) => {
       console.log("Adding member to project:", { projectId, userId });
 
       const response = await mockApi.addMemberToProject(projectId, userId);
-      if (response.success) {
+      if (response.success && response.data) {
         console.log("Member added to project:", response.data);
         // Update projects state
         setProjects((prev) =>
-          prev.map((p) => (p.id === projectId ? response.data : p))
+          prev.map((p) => (p.id === projectId ? response.data! : p))
         );
         // Update current project if it's the one being updated
         if (currentProject && currentProject.id === projectId) {
