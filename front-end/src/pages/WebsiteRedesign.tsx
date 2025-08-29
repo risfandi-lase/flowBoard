@@ -13,7 +13,6 @@ export default function WebsiteRedesign() {
     createTask,
     moveTask,
     deleteTask,
-    users,
     loading,
   } = useApi();
   const [showNewTaskForms, setShowNewTaskForms] = useState<{
