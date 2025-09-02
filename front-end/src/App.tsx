@@ -1,4 +1,5 @@
 // src/App.tsx
+import { useState, useEffect } from "react";
 import "./App.css";
 import MainLayout from "./components/MainLayout";
 import NavBar from "./components/NavBar";
@@ -6,6 +7,31 @@ import Sidebar from "./components/Sidebar";
 import { ApiProvider } from "./contexts/ApiContext";
 
 function App() {
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
+
+  if (isMobile) {
+    return (
+      <div className="flex items-center justify-center h-screen text-center">
+        <p className="text-2xl">
+          Please switch to the desktop version - the mobile version is still in
+          development :)
+        </p>
+      </div>
+    );
+  }
+
   return (
     <ApiProvider>
       <div
