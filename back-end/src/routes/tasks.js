@@ -1,7 +1,7 @@
 // src/routes/tasks.js
 const express = require('express');
 const router = express.Router();
-const { supabase } = require('../config/database');
+const supabase = require('../config/database').getSupabase();
 
 // GET /api/tasks?project_id=1 - Get all tasks for a project, grouped by status
 router.get('/', async (req, res) => {

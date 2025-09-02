@@ -1,7 +1,7 @@
 // src/routes/users.js
 const express = require('express');
 const router = express.Router();
-const { supabase } = require('../config/database');
+const supabase = require('../config/database').getSupabase();
 
 // GET /api/users - Get all users
 router.get('/', async (req, res) => {

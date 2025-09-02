@@ -5,21 +5,20 @@ import type { User, Project, Task, GroupedTasks, ApiResponse } from '../types/ap
 // Create axios instance with base configuration
 const api = axios.create({
   baseURL: 'https://flowboard-th9n.onrender.com/api',
-  timeout: 10000,
+  timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
   }
 });
 
-// Helper function to simulate delay
-const delay = (ms = 500) => new Promise(resolve => setTimeout(resolve, ms));
+
 
 // Real API functions
 export const realApi = {
   // Users
   getUsers: async (): Promise<ApiResponse<User[]>> => {
     try {
-      await delay(300);
+      
       const response = await api.get('/users');
       return { success: true, data: response.data.data };
     } catch (error: any) {
@@ -30,7 +29,7 @@ export const realApi = {
 
   createUser: async (userData: Partial<User>): Promise<ApiResponse<User>> => {
     try {
-      await delay(300);
+      
       const response = await api.post('/users', userData);
       return { success: true, data: response.data.data };
     } catch (error: any) {
@@ -42,7 +41,7 @@ export const realApi = {
   // Projects
   getProjects: async (): Promise<ApiResponse<Project[]>> => {
     try {
-      await delay(300);
+      
       const response = await api.get('/projects');
       const convertedProjects = response.data.data.map((project: any) => ({
         ...project,
@@ -57,7 +56,7 @@ export const realApi = {
 
   getProject: async (projectId: number): Promise<ApiResponse<Project>> => {
     try {
-      await delay(300);
+      
       const response = await api.get(`/projects/${projectId}`);
       return { success: true, data: response.data.data };
     } catch (error: any) {
@@ -68,7 +67,7 @@ export const realApi = {
 
   createProject: async (projectData: Partial<Project>): Promise<ApiResponse<Project>> => {
     try {
-      await delay(300);
+      
       const response = await api.post('/projects', projectData);
       return { success: true, data: response.data.data };
     } catch (error: any) {
@@ -79,7 +78,7 @@ export const realApi = {
 
   deleteProject: async (projectId: number): Promise<ApiResponse<void>> => {
     try {
-      await delay(300);
+      
       await api.delete(`/projects/${projectId}`);
       return { success: true };
     } catch (error: any) {
@@ -90,7 +89,7 @@ export const realApi = {
 
   addMemberToProject: async (projectId: number, userId: number): Promise<ApiResponse<Project>> => {
     try {
-      await delay(300);
+      
       const response = await api.post(`/projects/${projectId}/members`, { user_id: userId });
       return { success: true, data: response.data.data };
     } catch (error: any) {
@@ -102,7 +101,7 @@ export const realApi = {
   // Tasks
   getTasks: async (projectId: number): Promise<ApiResponse<GroupedTasks>> => {
     try {
-      await delay(300);
+      
       const response = await api.get(`/tasks?project_id=${projectId}`);
       
       const convertTasks = (taskList: any[]) => 
@@ -131,7 +130,7 @@ export const realApi = {
 
   createTask: async (taskData: Partial<Task>): Promise<ApiResponse<Task>> => {
     try {
-      await delay(300);
+      
       const response = await api.post('/tasks', {
         project_id: taskData.projectId,
         title: taskData.title,
@@ -163,7 +162,7 @@ export const realApi = {
 
   moveTask: async (taskId: number, newStatus: 'todo' | 'in-progress' | 'completed'): Promise<ApiResponse<Task>> => {
     try {
-      await delay(300);
+      
       const response = await api.patch(`/tasks/${taskId}/status`, { status: newStatus });
       return { success: true, data: response.data.data };
     } catch (error: any) {
@@ -174,7 +173,7 @@ export const realApi = {
 
   deleteTask: async (taskId: number): Promise<ApiResponse<void>> => {
     try {
-      await delay(300);
+      
       await api.delete(`/tasks/${taskId}`);
       return { success: true };
     } catch (error: any) {

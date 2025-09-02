@@ -1,7 +1,7 @@
 // src/routes/projects.js
 const express = require('express');
 const router = express.Router();
-const { supabase } = require('../config/database');
+const supabase = require('../config/database').getSupabase();
 
 // GET /api/projects - Get all projects with members
 router.get('/', async (req, res) => {
