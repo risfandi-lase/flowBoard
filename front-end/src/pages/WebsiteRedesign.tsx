@@ -337,7 +337,7 @@ export default function WebsiteRedesign() {
     tasksArray: Task[]
   ) => (
     <div
-      className="card bg-base-100 border-gray-300/50 border-2 rounded-2xl items-center h-full w-120 shadow-xl"
+      className="card bg-base-100 border-gray-300/50 border-2 rounded-2xl items-center h-full w-115 shadow-xl"
       onDragOver={handleDragOver}
       onDrop={(e) => handleDrop(e, status)}
     >
