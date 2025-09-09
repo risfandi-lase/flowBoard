@@ -79,10 +79,18 @@ export const ApiProvider: React.FC<ApiProviderProps> = ({ children }) => {
   // Load initial data
   useEffect(() => {
     const initializeData = async () => {
-      // Load users first
-      await loadUsers();
-      // Then load projects
-      await loadProjects();
+      setLoading(true);
+      try {
+        // Load users first
+        await loadUsers();
+        // Then load projects
+        await loadProjects();
+      } catch (error) {
+        setError("Failed to initialize data.");
+        console.error("Initialization error:", error);
+      } finally {
+        setLoading(false);
+      }
     };
 
     initializeData();
